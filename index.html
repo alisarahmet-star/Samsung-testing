@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sanal Telefon – Web OS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:radial-gradient(circle at 30% 20%,#2a2f45,#0b0d14 70%);display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;color:#fff}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+svg{display:block}
+.phone{--ab:#0f0f0f;--af:#f1f1f1;--am:#aaa;--ac:#272727;--bd:#2d2d2d;--wp:linear-gradient(160deg,#1b2a4e,#4a2a63 55%,#10121c);
+ position:relative;height:min(94vh,860px);aspect-ratio:9/19.5;max-width:96vw;border-radius:54px;padding:11px;background:linear-gradient(145deg,#3a3d48,#12131a);box-shadow:0 0 0 2px #555a6a,0 30px 80px #000c,inset 0 0 6px #000}
+.phone.light{--ab:#fff;--af:#0f0f0f;--am:#606060;--ac:#f0f0f0;--bd:#e3e3e3}
+.screen{position:relative;width:100%;height:100%;border-radius:44px;overflow:hidden;background:var(--wp) center/cover;isolation:isolate}
+.notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:96px;height:28px;border-radius:20px;background:#000;z-index:100;display:flex;align-items:center;justify-content:flex-end;padding-right:10px}
+.notch i{width:10px;height:10px;border-radius:50%;background:radial-gradient(#2c3a63,#05070d)}
+#status{position:absolute;top:0;left:0;right:0;height:46px;padding:12px 26px 0;display:flex;justify-content:space-between;align-items:flex-start;z-index:90;font-size:14px;font-weight:600;color:#fff;transition:color .3s;pointer-events:none}
+#status.dk{color:var(--af)}
+#status .r{display:flex;gap:6px;align-items:center}
+.bat{display:flex;align-items:center;gap:3px;font-size:11px}
+#home{position:absolute;inset:0;padding:64px 20px 90px;display:flex;flex-direction:column;gap:22px;transition:transform .35s,opacity .35s,filter .35s}
+#home.back{transform:scale(.92);opacity:.5;filter:blur(3px)}
+.widget{padding:18px 20px;border-radius:28px;background:#ffffff1f;backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border:1px solid #ffffff2e}
+.widget b{display:block;font-size:54px;font-weight:300;letter-spacing:-2px;line-height:1}
+.widget span{font-size:14px;opacity:.85}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px 8px}
+.ic{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;text-shadow:0 1px 4px #0008}
+.tile{width:56px;height:56px;border-radius:17px;display:grid;place-items:center;box-shadow:0 6px 14px #0006,inset 0 1px 0 #fff5;transition:transform .15s}
+.ic:active .tile{transform:scale(.88)}
+.dock{margin-top:auto;padding:14px;border-radius:30px;display:flex;justify-content:space-around;background:#ffffff1a;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid #ffffff26}
+.app{position:absolute;inset:0;background:var(--ab);color:var(--af);padding-top:46px;padding-bottom:26px;display:flex;flex-direction:column;transform:scale(.3);opacity:0;pointer-events:none;border-radius:44px;transition:transform .38s cubic-bezier(.2,.9,.25,1),opacity .28s,border-radius .38s;z-index:20;overflow:hidden}
+.app.open{transform:none;opacity:1;pointer-events:auto;border-radius:0}
+.scroll{flex:1;overflow-y:auto;scrollbar-width:none}.scroll::-webkit-scrollbar{display:none}
+.bar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;gap:10px}
+#navbar{position:absolute;bottom:0;left:0;right:0;height:26px;z-index:95;display:grid;place-items:center;cursor:grab;touch-action:none}
+#navbar i{width:120px;height:5px;border-radius:4px;background:#fff;box-shadow:0 0 0 .5px #0005;transition:background .3s,width .2s}
+#navbar.dk i{background:var(--af)}#navbar:active i{width:90px}
+/* youtube */
+.yt-logo{display:flex;align-items:center;gap:4px;font-weight:700;letter-spacing:-1px;font-size:19px}
+.chips{display:flex;gap:8px;padding:4px 12px 10px;overflow-x:auto;scrollbar-width:none}
+.chip{padding:7px 12px;border-radius:9px;background:var(--ac);font-size:13px;white-space:nowrap}.chip.on{background:var(--af);color:var(--ab)}
+.vid{margin-bottom:18px;cursor:pointer}
+.th{position:relative;aspect-ratio:16/9;overflow:hidden}.th svg{width:100%;height:100%}
+.dur{position:absolute;right:8px;bottom:8px;background:#000c;color:#fff;font-size:12px;padding:2px 5px;border-radius:4px}
+.meta{display:flex;gap:10px;padding:10px 12px}
+.av{width:36px;height:36px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;font-size:14px;color:#fff}
+.meta h4{font-size:14px;font-weight:500;line-height:1.3}.meta p{font-size:12px;color:var(--am);margin-top:3px}
+.player{position:sticky;top:0;background:#000;z-index:2}
+.pl{position:relative;aspect-ratio:16/9;display:grid;place-items:center}.pl>svg{position:absolute;inset:0;width:100%;height:100%}
+.pbar{position:absolute;left:0;right:0;bottom:0;height:3px;background:#fff4}.pbar i{display:block;height:100%;width:0;background:#f03}
+.actions{display:flex;gap:8px;padding:4px 12px 12px;overflow-x:auto;scrollbar-width:none}
+.actions button{display:flex;gap:6px;align-items:center;background:var(--ac);padding:8px 14px;border-radius:18px;font-size:13px;white-space:nowrap}
+.actions button.on{background:var(--af);color:var(--ab)}
+.cbox{margin:4px 12px;padding:12px;border-radius:12px;background:var(--ac)}
+.cbox h5{font-size:14px;margin-bottom:10px}
+.cm{display:flex;gap:10px;margin-bottom:14px}.cm small{color:var(--am);font-size:12px}.cm p{font-size:14px;margin-top:2px;line-height:1.35;word-break:break-word}
+.cm .gif,.pv .gif{width:120px;height:120px;border-radius:12px;overflow:hidden;margin-top:6px}.gif svg{width:100%;height:100%}
+.composer{border-top:1px solid var(--bd);padding:8px 10px 6px;background:var(--ab)}
+.pv{display:none;margin:0 0 8px 44px;position:relative;width:84px}.pv.on{display:block}.pv .gif{width:84px;height:84px;margin:0}
+.pv button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#000c;color:#fff;font-size:14px;line-height:1}
+.crow{display:flex;gap:8px;align-items:center}
+.crow input{flex:1;min-width:0;background:var(--ac);color:var(--af);border:0;border-radius:20px;padding:10px 14px;font:inherit;font-size:14px;outline:0}
+.gifb{border:1.5px solid var(--am);border-radius:6px;padding:2px 6px;font-size:12px;font-weight:700}
+.send{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#3ea6ff;color:#fff}
+.picker{position:absolute;left:0;right:0;bottom:0;height:56%;background:var(--ab);border-radius:20px 20px 0 0;border-top:1px solid var(--bd);box-shadow:0 -10px 30px #0006;transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.9,.25,1);z-index:6;display:flex;flex-direction:column}
+.picker.open{transform:none}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px 40px;overflow-y:auto}
+.pgrid button{aspect-ratio:1;border-radius:12px;overflow:hidden;position:relative}.pgrid button svg{width:100%;height:100%}
+.pgrid button span{position:absolute;left:6px;bottom:5px;font-size:11px;background:#0008;color:#fff;padding:1px 6px;border-radius:8px}
+.clk{cursor:pointer;padding:4px;box-sizing:content-box;margin:-4px}.clk:active,.chip:active,.actions button:active,.gifb:active{opacity:.6}.chip{border:0;color:inherit;font:inherit;font-size:13px;cursor:pointer}.chip.on{color:var(--ab)}.thumb,#status .r{cursor:pointer}
+.back{position:absolute;top:8px;left:8px;width:36px;height:36px;border-radius:50%;background:#0008;color:#fff;display:grid;place-items:center;z-index:3}
+/* gallery */
+.gg{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px}
+.gg button{aspect-ratio:1;position:relative;overflow:hidden}.gg svg{width:100%;height:100%}
+.tag{position:absolute;right:4px;top:4px;background:#000a;color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:6px}
+.viewer{position:absolute;inset:0;background:#000;z-index:30;display:flex;flex-direction:column;justify-content:center;opacity:0;pointer-events:none;transform:scale(.5);transition:.35s cubic-bezier(.2,.9,.25,1)}
+.viewer.open{opacity:1;pointer-events:auto;transform:none}.viewer svg{width:100%;aspect-ratio:1;max-height:70%}
+.viewer .x{position:absolute;top:54px;left:12px;width:40px;height:40px;border-radius:50%;background:#fff2;display:grid;place-items:center}
+/* settings / notes / browser / camera */
+.h1{font-size:28px;font-weight:700;padding:10px 20px 14px}
+.sec{margin:0 14px 16px;border-radius:16px;background:var(--ac);overflow:hidden}
+.row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;font-size:15px;border-bottom:1px solid var(--bd)}.row:last-child{border:0}.row span{color:var(--am);font-size:14px}
+.sw{width:50px;height:30px;border-radius:16px;background:#8886;position:relative;transition:.25s}.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.25s;box-shadow:0 1px 3px #0005}.sw.on{background:#34c759}.sw.on::after{transform:translateX(20px)}
+.wps{display:flex;gap:12px;padding:14px 16px}.wps button{width:52px;height:80px;border-radius:12px;border:2px solid transparent}.wps button.on{border-color:#3ea6ff}
+textarea{flex:1;margin:0 16px 12px;background:transparent;color:var(--af);border:0;outline:0;resize:none;font:inherit;font-size:17px;line-height:1.5}
+.url{flex:1;display:flex;align-items:center;gap:8px;background:var(--ac);border-radius:22px;padding:0 14px}.url input{flex:1;min-width:0;height:40px;background:none;border:0;outline:0;color:var(--af);font:inherit;font-size:14px}
+.res{padding:16px 20px}.res h3{color:#3ea6ff;font-weight:500;font-size:17px;margin-bottom:3px}.res p{font-size:13px;color:var(--am);margin-bottom:18px;line-height:1.4}.res small{font-size:12px;color:#34c759}
+.cam{background:#000;color:#fff}.cam .vf{flex:1;position:relative;overflow:hidden}.cam .vf svg{width:100%;height:100%}
+.cam .ctl{height:130px;display:flex;align-items:center;justify-content:space-around;background:#000}
+.shut{width:70px;height:70px;border-radius:50%;border:4px solid #fff;display:grid;place-items:center}.shut i{width:54px;height:54px;border-radius:50%;background:#fff;transition:transform .1s}.shut:active i{transform:scale(.85)}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}.flash.go{animation:fl .4s}@keyframes fl{0%{opacity:.95}100%{opacity:0}}
+.thumb{width:48px;height:48px;border-radius:10px;overflow:hidden;background:#222}.thumb svg{width:100%;height:100%}
+.toast{position:absolute;bottom:60px;left:50%;transform:translate(-50%,20px);background:#222d;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;transition:.3s;z-index:99;pointer-events:none}.toast.on{opacity:1;transform:translate(-50%,0)}
+@media(max-width:520px){body{background:#000}.phone{height:100dvh;width:100vw;max-width:none;aspect-ratio:auto;border-radius:0;padding:0;box-shadow:none;background:#000}.screen{border-radius:0}.app{border-radius:0}.notch{top:8px}}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01s!important}}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+<div class="screen" id="screen">
+  <div class="notch"><i></i></div>
+  <div id="status"><span id="clock">09:41</span>
+    <div class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+      <svg width="17" height="12" viewBox="0 0 24 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M2 6.5a15 15 0 0 1 20 0"/><path d="M6 11a9 9 0 0 1 12 0"/><circle cx="12" cy="15.5" r="1.4" fill="currentColor"/></svg>
+      <div class="bat"><span>98%</span><svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.5" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="18" height="8" rx="2" fill="currentColor"/><rect x="23" y="4" width="1.8" height="4" rx=".9" fill="currentColor" opacity=".6"/></svg></div>
+    </div>
+  </div>
+
+  <div id="home">
+    <div class="widget"><b id="wtime">09:41</b><span id="wdate"></span></div>
+    <div class="grid" id="grid"></div>
+    <div class="dock" id="dock"></div>
+  </div>
+
+  <!-- YouTube -->
+  <section class="app" id="app-yt">
+    <div class="bar"><div class="yt-logo"><svg width="30" height="21" viewBox="0 0 30 21"><rect width="30" height="21" rx="6" fill="#f03"/><path d="M12 6l8 4.5-8 4.5z" fill="#fff"/></svg>YouTube</div>
+      <div style="display:flex;gap:16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 9h18c0-1-3-2-3-9M10 21h4"/></svg><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></div></div>
+    <div id="yt-feed" class="scroll"><div class="chips"><span class="chip on">Tümü</span><span class="chip">Müzik</span><span class="chip">Oyun</span><span class="chip">Canlı</span><span class="chip">Doğa</span><span class="chip">Teknoloji</span></div><div id="yt-list"></div></div>
+    <div id="yt-watch" style="position:absolute;inset:0;padding-top:46px;background:var(--ab);display:none;flex-direction:column;z-index:5">
+      <div class="scroll" id="yt-scroll">
+        <div class="player"><button class="back" id="ybk" aria-label="Geri"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><div class="pl" id="yt-pl"></div></div>
+        <div style="padding:12px"><h3 id="yt-t" style="font-size:16px;font-weight:600;line-height:1.3"></h3><p id="yt-s" style="font-size:12px;color:var(--am);margin-top:4px"></p></div>
+        <div class="actions"><button id="likeb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 11v10H3V11zM7 11l4-8c2 0 3 1 3 3v3h6a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 1H7"/></svg><span id="likes">24 B</span></button><button><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8h16v-8M16 6l-4-4-4 4M12 2v14"/></svg>Paylaş</button><button><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m-5-5l5 5 5-5M4 21h16"/></svg>İndir</button></div>
+        <div class="cbox"><h5 id="ccount">Yorumlar</h5><div id="cmts"></div></div><div style="height:20px"></div>
+      </div>
+      <div class="composer">
+        <div class="pv" id="pv"><div class="gif" id="pvg"></div><button id="pvx">×</button></div>
+        <div class="crow"><div class="av" style="background:#7c4dff;width:32px;height:32px">S</div><input id="cin" placeholder="Yorum ekle..." autocomplete="off"><button class="gifb" id="gifb">GIF</button><button class="send" id="sendb" aria-label="Gönder"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button></div>
+      </div>
+      <div class="picker" id="picker"><div class="bar"><b>GIF seç</b><button id="pkx" style="font-size:22px">×</button></div><div class="pgrid" id="pgrid"></div></div>
+    </div>
+  </section>
+
+  <!-- Galeri -->
+  <section class="app" id="app-gal"><div class="h1">Galeri</div><div class="scroll"><div class="gg" id="gg"></div></div>
+    <div class="viewer" id="viewer"><button class="x" id="vx"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button><div id="vimg"></div><p id="vcap" style="text-align:center;padding:14px;font-size:14px;color:#ccc"></p></div></section>
+
+  <!-- Tarayıcı -->
+  <section class="app" id="app-web"><div class="bar"><div class="url"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="urlin" placeholder="Ara veya adres yaz" autocomplete="off"></div></div><div class="scroll" id="webc"></div></section>
+
+  <!-- Ayarlar -->
+  <section class="app" id="app-set"><div class="h1">Ayarlar</div><div class="scroll">
+    <div class="sec"><div class="row">Karanlık mod<button class="sw on" id="dsw" aria-label="Karanlık mod"></button></div></div>
+    <div class="sec"><div class="row" style="border:0">Duvar kağıdı</div><div class="wps" id="wps"></div></div>
+    <div class="sec"><div class="row">Cihaz adı<span>Sanal Telefon X</span></div><div class="row">Sürüm<span>WebOS 1.0</span></div><div class="row">Ekran<span id="res"></span></div><div class="row">Depolama<span>128 GB</span></div><div class="row">Pil<span>%98</span></div><div class="row">Tarayıcı<span id="ua"></span></div></div>
+  </div></section>
+
+  <!-- Notlar -->
+  <section class="app" id="app-note"><div class="h1">Notlar</div><textarea id="nta" placeholder="Bir şeyler yaz...">Alışveriş listesi
+- Kahve
+- Pil
+- Kulaklık</textarea></section>
+
+  <!-- Kamera -->
+  <section class="app cam" id="app-cam"><div class="vf" id="vf"><div class="flash" id="flash"></div></div><div class="ctl"><div class="thumb" id="cthumb"></div><button class="shut" id="shut" aria-label="Fotoğraf çek"><i></i></button><span style="width:48px"></span></div></section>
+
+  <div class="toast" id="toast"></div>
+  <div id="navbar"><i></i></div>
+</div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let uid=0;
+const svg=(a,b,inner,vb='0 0 120 120')=>{const id='g'+uid++;return `<svg viewBox="${vb}" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="120" height="120" fill="url(#${id})"/>${inner}</svg>`};
+const an=(t,n,v,d,x='')=>`<${t} attributeName="${n}" values="${v}" dur="${d}" repeatCount="indefinite" ${x}/>`;
+/* Animasyonlu GIF'ler (SVG/SMIL) */
+const GIFS=[
+ {n:'Zıplayan top',f:()=>svg('#ff7a59','#ffb347',`<ellipse cx="60" cy="100" rx="14" ry="4" fill="#0004">${an('animate','rx','14;7;14','.9s')}</ellipse><circle cx="60" cy="30" r="14" fill="#fff">${an('animate','cy','28;84;28','.9s')}</circle>`)},
+ {n:'Dönen kare',f:()=>svg('#42e695','#3bb2b8',`<rect x="38" y="38" width="44" height="44" rx="10" fill="#fff"><animateTransform attributeName="transform" type="rotate" from="0 60 60" to="360 60 60" dur="2s" repeatCount="indefinite"/></rect>`)},
+ {n:'Kalp',f:()=>svg('#ee0979','#ff6a00',`<g transform="translate(60 62)"><path d="M0 24C-34 2-24-28 0-11 24-28 34 2 0 24Z" fill="#fff"><animateTransform attributeName="transform" type="scale" values="1;1.3;1;1.2;1" dur=".9s" repeatCount="indefinite"/></path></g>`)},
+ {n:'Dalga',f:()=>svg('#4776e6','#8e54e9',[0,.6,1.2].map(d=>`<circle cx="60" cy="60" r="5" fill="none" stroke="#fff" stroke-width="3">${an('animate','r','5;56','1.8s',`begin="${d}s"`)}${an('animate','opacity','1;0','1.8s',`begin="${d}s"`)}</circle>`).join(''))},
+ {n:'Yıldızlar',f:()=>svg('#0f2027','#2c5364',[[20,25],[90,35],[55,60],[30,90],[95,85],[70,18]].map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="#ffe27a">${an('animate','opacity','.1;1;.1',(1+i*.3)+'s')}${an('animate','r','2;7;2',(1+i*.3)+'s')}</circle>`).join(''))},
+ {n:'Ekolayzer',f:()=>svg('#f12711','#f5af19',[0,1,2,3,4].map(i=>`<rect x="${20+i*18}" width="12" rx="4" fill="#fff">${an('animate','height','20;80;30;60;20',(.8+i*.15)+'s')}${an('animate','y','90;30;80;50;90',(.8+i*.15)+'s')}</rect>`).join(''))}
+];
+const scene=(a,b,sun)=>svg(a,b,`<circle cx="${sun}" cy="34" r="13" fill="#fff9" /><path d="M0 100L30 62l22 28 24-40 44 50v20H0z" fill="#0004"/><path d="M0 108l36-30 28 24 26-18 30 26v10H0z" fill="#0006"/>`);
+const IMGS=[['Gün batımı','#ff9966','#ff5e62',85],['Okyanus','#2193b0','#6dd5ed',30],['Orman','#134e5e','#71b280',60],['Çöl','#f7971e','#ffd200',95],['Kutup','#8e9eab','#eef2f3',25],['Gece','#0f0c29','#302b63',70]];
+
+/* Durum çubuğu & saat */
+function tick(){const d=new Date(),t=d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});$('#clock').textContent=t;$('#wtime').textContent=t;$('#wdate').textContent=d.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'})}
+tick();setInterval(tick,1000);
+
+/* İkonlar */
+const I=(p,s='#fff')=>`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="${s}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const APPS=[
+ {id:'yt',n:'YouTube',bg:'#fff',ic:`<svg width="34" height="24" viewBox="0 0 30 21"><rect width="30" height="21" rx="6" fill="#f03"/><path d="M12 6l8 4.5-8 4.5z" fill="#fff"/></svg>`},
+ {id:'gal',n:'Galeri',bg:'linear-gradient(135deg,#f9d423,#ff4e50)',ic:I('<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="M21 16l-5-5-9 10"/>')},
+ {id:'web',n:'Tarayıcı',bg:'linear-gradient(135deg,#4facfe,#1b6ef3)',ic:I('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>')},
+ {id:'cam',n:'Kamera',bg:'linear-gradient(135deg,#434343,#111)',ic:I('<path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/>')},
+ {id:'note',n:'Notlar',bg:'linear-gradient(135deg,#ffe259,#ffa751)',ic:I('<path d="M5 3h14v18H5zM9 8h6M9 12h6M9 16h3"/>','#5a3b00')},
+ {id:'set',n:'Ayarlar',bg:'linear-gradient(135deg,#8e9eab,#505a66)',ic:I('<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.3l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2.2-1.3L14 3h-4l-.4 2.5a7 7 0 0 0-2.2 1.3l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2.6l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2.2 1.3L10 21h4l.4-2.5a7 7 0 0 0 2.2-1.3l2.3 1 2-3.4-2-1.5c.1-.4.1-.9.1-1.3z"/>')}
+];
+const mk=a=>`<button class="ic" data-app="${a.id}"><div class="tile" style="background:${a.bg}">${a.ic}</div>${a.n}</button>`;
+$('#grid').innerHTML=APPS.slice(0,6).map(mk).join('');
+$('#dock').innerHTML=['cam','web','gal','set'].map(id=>mk(APPS.find(a=>a.id===id))).join('');
+$('#dock').addEventListener('click',e=>{const b=e.target.closest('[data-app]');if(b)open(b.dataset.app,b.querySelector('.tile'))});
+
+/* Uygulama açma/kapama */
+let cur=null;
+function open(id,el){
+  const app=$('#app-'+id);if(!app)return;
+  if(cur)close(true);
+  const r=el?el.getBoundingClientRect():null,s=$('#screen').getBoundingClientRect();
+  app.style.transformOrigin=r?`${r.left+r.width/2-s.left}px ${r.top+r.height/2-s.top}px`:'50% 50%';
+  requestAnimationFrame(()=>{app.classList.add('open');$('#home').classList.add('back');setDk(true)});
+  cur=id;if(id==='cam')startCam();if(id==='gal')renderGal();
+}
+function close(quiet){
+  if(!cur)return;const a=$('#app-'+cur);a.classList.remove('open');
+  if(cur==='yt')closeWatch();
+  $('#viewer').classList.remove('open');
+  if(!quiet){$('#home').classList.remove('back');setDk(false)}cur=null;
+}
+function setDk(v){$('#status').classList.toggle('dk',v&&cur!=='cam');$('#navbar').classList.toggle('dk',v&&cur!=='cam')}
+$('#grid').addEventListener('click',e=>{const b=e.target.closest('[data-app]');if(b)open(b.dataset.app,b.querySelector('.tile'))});
+/* Gezinti çubuğu: tıkla veya yukarı sürükle */
+let sy=null;const nb=$('#navbar');
+nb.addEventListener('pointerdown',e=>{sy=e.clientY;nb.setPointerCapture(e.pointerId)});
+nb.addEventListener('pointerup',e=>{if(sy!==null){close();sy=null}});
+nb.addEventListener('pointermove',e=>{if(sy!==null&&sy-e.clientY>25){close();sy=null}});
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1800)}
+
+/* YouTube */
+const VID=[
+ {t:'Dağların Ardında Gün Doğumu – 4K Doğa Belgeseli',c:'Doğa Atlası',v:'1,2 Mn',a:'3 gün önce',d:'12:08',col:['#ff9966','#ff5e62',85],ch:'#e91e63'},
+ {t:'Lo-fi Çalışma Müziği – Yağmurlu Bir Gece',c:'Sakin Kanal',v:'845 B',a:'1 hafta önce',d:'1:02:15',col:['#0f0c29','#302b63',70],ch:'#3f51b5'},
+ {t:'Okyanusun Derinliklerinde Gizemli Yolculuk',c:'Mavi Dünya',v:'3,4 Mn',a:'2 ay önce',d:'18:44',col:['#2193b0','#6dd5ed',30],ch:'#009688'},
+ {t:'10 Dakikada Web Geliştirmeye Giriş',c:'Kod Atölyesi',v:'410 B',a:'5 gün önce',d:'10:03',col:['#134e5e','#71b280',60],ch:'#ff9800'},
+ {t:'Çölde Hayatta Kalma Rehberi',c:'Vahşi Rota',v:'97 B',a:'12 saat önce',d:'8:27',col:['#f7971e','#ffd200',95],ch:'#795548'}
+];
+const COM=[{u:'Elif',c:'#e91e63',t:'Bu videoyu bekliyordum, harika olmuş!',g:null,a:'2 saat önce'},{u:'Mert',c:'#00bcd4',t:'Müzik seçimi çok yerinde 👏'.replace(' 👏',''),g:null,a:'5 saat önce'},{u:'Ayşe',c:'#ff9800',t:'',g:3,a:'1 gün önce'}];
+let cmts=[...COM],selG=null,liked=false,pTimer;
+$('#yt-list').innerHTML=VID.map((v,i)=>`<div class="vid" data-i="${i}"><div class="th">${scene(...v.col)}<span class="dur">${v.d}</span></div><div class="meta"><div class="av" style="background:${v.ch}">${v.c[0]}</div><div><h4>${v.t}</h4><p>${v.c} • ${v.v} görüntüleme • ${v.a}</p></div></div></div>`).join('');
+$('#yt-list').addEventListener('click',e=>{const v=e.target.closest('.vid');if(v)watch(+v.dataset.i)});
+function watch(i){
+  const v=VID[i];$('#yt-watch').style.display='flex';
+  $('#yt-pl').innerHTML=scene(...v.col)+`<svg width="56" height="56" viewBox="0 0 56 56" style="position:relative"><circle cx="28" cy="28" r="28" fill="#0007"/><path d="M22 17l17 11-17 11z" fill="#fff"/></svg><div class="pbar"><i id="pfill"></i></div>`;
+  $('#yt-t').textContent=v.t;$('#yt-s').textContent=`${v.c} • ${v.v} görüntüleme • ${v.a}`;
+  liked=false;$('#likeb').classList.remove('on');$('#likes').textContent='24 B';
+  let p=0;clearInterval(pTimer);pTimer=setInterval(()=>{p=(p+.4)%100;const f=$('#pfill');if(f)f.style.width=p+'%'},120);
+  renderC();$('#yt-scroll').scrollTop=0;
+}
+function closeWatch(){$('#yt-watch').style.display='none';clearInterval(pTimer);$('#picker').classList.remove('open')}
+$('#likeb').onclick=()=>{liked=!liked;$('#likeb').classList.toggle('on',liked);$('#likes').textContent=liked?'25 B':'24 B'};
+function renderC(){
+  $('#ccount').textContent='Yorumlar '+cmts.length;
+  $('#cmts').innerHTML=cmts.map(c=>`<div class="cm"><div class="av" style="background:${c.c};width:30px;height:30px;font-size:13px">${c.u[0]}</div><div><small>@${c.u.toLowerCase()} • ${c.a}</small>${c.t?`<p>${c.t}</p>`:''}${c.g!==null?`<div class="gif">${GIFS[c.g].f()}</div>`:''}</div></div>`).join('');
+}
+$('#pgrid').innerHTML=GIFS.map((g,i)=>`<button data-g="${i}">${g.f()}<span>${g.n}</span></button>`).join('');
+$('#gifb').onclick=()=>$('#picker').classList.toggle('open');
+$('#pkx').onclick=()=>$('#picker').classList.remove('open');
+$('#pgrid').addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(!b)return;selG=+b.dataset.g;$('#pvg').innerHTML=GIFS[selG].f();$('#pv').classList.add('on');$('#picker').classList.remove('open')});
+$('#pvx').onclick=()=>{selG=null;$('#pv').classList.remove('on')};
+function send(){
+  const t=$('#cin').value.trim();if(!t&&selG===null)return;
+  cmts.unshift({u:'Sen',c:'#7c4dff',t:t.replace(/</g,'&lt;'),g:selG,a:'şimdi'});
+  $('#cin').value='';selG=null;$('#pv').classList.remove('on');renderC();$('#yt-scroll').scrollTo({top:$('.cbox').offsetTop-60,behavior:'smooth'});
+}
+$('#sendb').onclick=send;$('#cin').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+
+/* Galeri */
+const ITEMS=[...GIFS.map(g=>({k:'GIF',n:g.n,f:g.f})),...IMGS.map(m=>({k:'',n:m[0],f:()=>scene(m[1],m[2],m[3])}))];
+function renderGal(){$('#gg').innerHTML=ITEMS.map((it,i)=>`<button data-i="${i}">${it.f()}${it.k?`<span class="tag">GIF</span>`:''}</button>`).join('')}
+$('#gg').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;const it=ITEMS[+b.dataset.i];$('#vimg').innerHTML=it.f();$('#vcap').textContent=it.n;$('#viewer').style.transformOrigin='50% 50%';$('#viewer').classList.add('open')});
+$('#vx').onclick=()=>$('#viewer').classList.remove('open');
+
+/* Tarayıcı */
+function home(){$('#webc').innerHTML=`<div style="text-align:center;padding:60px 20px"><div style="font-size:44px;font-weight:700;letter-spacing:-2px"><span style="color:#4285f4">A</span><span style="color:#ea4335">r</span><span style="color:#fbbc05">a</span><span style="color:#4285f4">m</span><span style="color:#34a853">a</span></div><p style="color:var(--am);margin-top:10px;font-size:14px">Bir şey yaz ve Enter'a bas</p></div>`}
+home();
+$('#urlin').addEventListener('keydown',e=>{if(e.key!=='Enter')return;const q=e.target.value.trim().replace(/</g,'&lt;');if(!q)return home();
+  $('#webc').innerHTML=['Wikipedia','Haberler','Videolar','Forum','Blog'].map((s,i)=>`<div class="res"><small>https://www.${s.toLowerCase()}.example/${encodeURIComponent(q)}</small><h3>${q} – ${s}</h3><p>${q} hakkında ${i+1}. sonuç: kısa bir özet ve ilgili bağlantılar burada görünür.</p></div>`).join('')});
+
+/* Ayarlar */
+const WPS=['linear-gradient(160deg,#1b2a4e,#4a2a63 55%,#10121c)','linear-gradient(160deg,#0f2027,#2c5364)','linear-gradient(160deg,#42275a,#734b6d)','linear-gradient(160deg,#232526,#414345)','linear-gradient(160deg,#ee0979,#ff6a00 70%,#1a0a14)'];
+$('#wps').innerHTML=WPS.map((w,i)=>`<button style="background:${w}" data-w="${i}" class="${i?'':'on'}"></button>`).join('');
+$('#wps').addEventListener('click',e=>{const b=e.target.closest('[data-w]');if(!b)return;$$('#wps button').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#phone').style.setProperty('--wp',WPS[+b.dataset.w])});
+$('#dsw').onclick=()=>{const on=$('#dsw').classList.toggle('on');$('#phone').classList.toggle('light',!on);toast(on?'Karanlık mod açık':'Aydınlık mod açık')};
+$('#res').textContent=innerWidth+'×'+innerHeight;$('#ua').textContent=(navigator.userAgent.match(/(Chrome|Firefox|Safari)\/[\d.]+/)||['Bilinmiyor'])[0];
+addEventListener('resize',()=>$('#res').textContent=innerWidth+'×'+innerHeight);
+
+/* Ek tıklamalar */
+const CAT=['Doğa','Müzik','Doğa','Teknoloji','Oyun'];let fc='Tümü',fq='';
+function feed(){const l=VID.map((v,i)=>({v,i})).filter(o=>(fc==='Tümü'||CAT[o.i]===fc)&&o.v.t.toLowerCase().includes(fq));
+ $('#yt-list').innerHTML=l.length?l.map(({v,i})=>`<div class="vid" data-i="${i}"><div class="th">${scene(...v.col)}<span class="dur">${v.d}</span></div><div class="meta"><div class="av" style="background:${v.ch}">${v.c[0]}</div><div><h4>${v.t}</h4><p>${v.c} • ${v.v} görüntüleme • ${v.a}</p></div></div></div>`).join(''):'<p style="text-align:center;color:var(--am);padding:40px 20px;font-size:14px">Bu filtrede video yok.</p>'}
+$$('#app-yt .chip').forEach(c=>c.onclick=()=>{$$('#app-yt .chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');fc=c.textContent;feed()});
+const sd=document.createElement('div');sd.style.cssText='display:none;padding:4px 12px 8px';sd.innerHTML='<input id="ysearch" placeholder="YouTube\'da ara" autocomplete="off" style="width:100%;background:var(--ac);color:var(--af);border:0;outline:0;border-radius:20px;padding:10px 16px;font:inherit;font-size:14px">';
+$('#yt-feed').prepend(sd);
+$('#ysearch').addEventListener('input',e=>{fq=e.target.value.toLowerCase();feed()});
+const yic=$$('#app-yt .bar > div:last-child svg');yic.forEach(s=>s.classList.add('clk'));
+yic[0].onclick=()=>toast('Yeni bildirim yok');
+yic[1].onclick=()=>{closeWatch();const o=sd.style.display==='none';sd.style.display=o?'block':'none';if(o)$('#ysearch').focus();else{fq='';$('#ysearch').value='';feed()}};
+$('#app-yt .yt-logo').onclick=()=>{closeWatch();$('#yt-feed').scrollTop=0};
+$('#ybk').onclick=closeWatch;
+const ab=$$('.actions button');ab[1].onclick=()=>toast('Bağlantı kopyalandı');ab[2].onclick=()=>toast('Video indiriliyor...');
+$('#cthumb').onclick=()=>open('gal');
+$('#status .r').style.pointerEvents='auto';$('#status .r').onclick=()=>toast('Pil %98 • Wi-Fi bağlı • Şebeke tam');
+$('.widget').style.cursor='pointer';$('.widget').onclick=()=>toast($('#wdate').textContent);
+$$('.row').forEach(r=>{if(!r.querySelector('.sw')&&r.querySelector('span'))r.style.cursor='pointer',r.onclick=()=>toast(r.firstChild.textContent+': '+r.querySelector('span').textContent)});
+/* Kamera */
+function startCam(){
+  $('#vf').insertAdjacentHTML('afterbegin','');
+  if($('#vf svg'))return;
+  $('#vf').insertAdjacentHTML('afterbegin',svg('#1d976c','#93f9b9',`<circle cx="30" cy="40" r="10" fill="#fff6">${an('animate','cx','20;100;20','9s')}</circle><circle cx="60" cy="70" r="26" fill="#0003">${an('animate','cy','60;80;60','4s')}</circle><path d="M0 100q30-20 60 0t60 0v20H0z" fill="#0005">${an('animate','d','M0 100q30-20 60 0t60 0v20H0z;M0 95q30 15 60 0t60 0v25H0z;M0 100q30-20 60 0t60 0v20H0z','5s')}</path>`));
+}
+let shots=0;
+$('#shut').onclick=()=>{
+  const f=$('#flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go');
+  const m=IMGS[shots%IMGS.length],n=`Fotoğraf ${++shots}`;
+  ITEMS.unshift({k:'',n,f:()=>scene(m[1],m[2],20+shots*13%80)});
+  $('#cthumb').innerHTML=ITEMS[0].f();toast('Galeriye kaydedildi');
+};
+</script>
+</body>
+</html>
